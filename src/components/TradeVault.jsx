@@ -74,9 +74,28 @@ export default function TradeVault() {
         parseEther(String(amountA)),
         parseEther(String(amountB))
       );
-      // v6: tx.wait(); v5: tx.wait()
-      await tx.wait();
-      setStatus(`Trade created. Tx: ${tx.hash.slice(0, 10)}…`);
+      const receipt = await tx.wait();
+
+      // 🔹 Extract tradeId from TradeCreated event
+      let newId = null;
+      for (const log of receipt.logs ?? []) {
+        try {
+          const parsed = contract.interface.parseLog(log);
+          if (parsed?.name === "TradeCreated") {
+            newId = parsed.args.tradeId.toString();
+            break;
+          }
+        } catch {}
+      }
+
+      if (newId) {
+        setTradeId(newId);
+        setStatus(`Trade created! ID: ${newId} | Tx: ${tx.hash.slice(0, 10)}…`);
+      } else {
+        setStatus(
+          `Trade created. Tx: ${tx.hash.slice(0, 10)}… (check HashScan for ID)`
+        );
+      }
     } catch (e) {
       setStatus(e?.message || String(e));
     }
