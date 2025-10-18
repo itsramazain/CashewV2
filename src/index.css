@@ -1,0 +1,23 @@
+/* index.css (quick sanity) */
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+.container {
+  padding: 16px;
+}
+.row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+}
+h1,
+h3 {
+  margin: 0 0 12px;
+}
