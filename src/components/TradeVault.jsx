@@ -101,46 +101,43 @@ export default function TradeVault() {
     }
   };
 
-  const deposit = async () => {
-    try {
-      setStatus("");
-      if (!tradeId) throw new Error("Enter a trade ID");
-      if (!amountA && !amountB) throw new Error("Enter an amount to deposit");
+const deposit = async () => {
+  try {
+    setStatus("");
+    if (!tradeId) throw new Error("Enter a trade ID");
 
-      const signer = await getSigner();
-      const user = (await signer.getAddress()).toLowerCase();
+    const signer = await getSigner();
+    const user = (await signer.getAddress()).toLowerCase();
 
-      const contract = new ethers.Contract(
-        TRADEVAULT_ADDRESS,
-        TRADEVAULT_ABI,
-        signer
-      );
+    const contract = new ethers.Contract(
+      TRADEVAULT_ADDRESS,
+      TRADEVAULT_ABI,
+      signer
+    );
 
-      // Fetch trade & decide which side the caller is
-      const t = await contract.getTrade(BigInt(tradeId));
-      const partyAAddr = t.partyA.toLowerCase();
-      const partyBAddr = t.partyB.toLowerCase();
+    const t = await contract.getTrade(BigInt(tradeId));
+    const partyAAddr = t.partyA.toLowerCase();
+    const partyBAddr = t.partyB.toLowerCase();
 
-      let valueWei;
-      if (user === partyAAddr) {
-        if (!amountA || Number(amountA) <= 0)
-          throw new Error("Amount A must be > 0 for Party A");
-        valueWei = parseEther(String(amountA));
-      } else if (user === partyBAddr) {
-        if (!amountB || Number(amountB) <= 0)
-          throw new Error("Amount B must be > 0 for Party B");
-        valueWei = parseEther(String(amountB));
-      } else {
-        throw new Error("Connected wallet is not a participant in this trade");
-      }
+    let valueWei;
 
-      const tx = await contract.deposit(BigInt(tradeId), { value: valueWei });
-      await tx.wait();
-      setStatus(`Deposit sent. Tx: ${tx.hash.slice(0, 10)}…`);
-    } catch (e) {
-      setStatus(e?.message || String(e));
+    if (user === partyAAddr) {
+      valueWei = t.amountA; // must match contract exactly
+    } else if (user === partyBAddr) {
+      valueWei = t.amountB;
+    } else {
+      throw new Error("Connected wallet is not a participant in this trade");
     }
-  };
+
+    const tx = await contract.deposit(BigInt(tradeId), { value: valueWei });
+    await tx.wait();
+    setStatus(`Deposit successful! Tx: ${tx.hash}`);
+  } catch (e) {
+    setStatus("Deposit failed: " + (e?.data?.message || e?.message || e));
+  }
+};
+
+
 
   return (
     <div>
